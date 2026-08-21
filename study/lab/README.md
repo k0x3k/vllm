@@ -31,6 +31,7 @@ one.
 | [`02_prefix_cache.py`](02_prefix_cache.py) | A 90-token shared prefix scoring an 80-token cache hit — block-aligned, so 5 full blocks of 16 | §5 |
 | [`03_free_list.py`](03_free_list.py) | Fingerprinted blocks landing at the back of the free list; LRU with no eviction code | §5 |
 | [`04_one_prompt_end_to_end.py`](04_one_prompt_end_to_end.py) | One prompt from text to freed blocks, then a second chat turn reusing them | §3, §5 |
+| [`05_who_shares_the_cache.py`](05_who_shares_the_cache.py) | Identical text shares cache across users; `cache_salt` opts out | §5 |
 
 [`_lab.py`](_lab.py) holds the shared setup and reuses `create_scheduler` from
 `tests/v1/core/utils.py` rather than reinventing it.

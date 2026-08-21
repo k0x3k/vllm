@@ -26,7 +26,13 @@ def tokenize(text: str, model: str = "facebook/opt-125m") -> list[int]:
     return tok(text).input_ids
 
 
-def make_request(req_id: str, token_ids: list[int], max_tokens: int, block_size: int = 16):
+def make_request(
+    req_id: str,
+    token_ids: list[int],
+    max_tokens: int,
+    block_size: int = 16,
+    cache_salt: str | None = None,
+):
     from vllm.sampling_params import SamplingParams
     from vllm.utils.hashing import sha256
     from vllm.v1.core.kv_cache_utils import get_request_block_hasher, init_none_hash
@@ -38,6 +44,7 @@ def make_request(req_id: str, token_ids: list[int], max_tokens: int, block_size:
         prompt_token_ids=token_ids,
         sampling_params=SamplingParams(max_tokens=max_tokens),
         pooling_params=None,
+        cache_salt=cache_salt,
         block_hasher=get_request_block_hasher(block_size, sha256),
     )
 
