@@ -18,7 +18,11 @@ SRC="$HOME/.claude/projects/$SLUG"
 DST="$LAB_DIR/sessions/$SLUG"
 
 if [ ! -d "$LAB_DIR/.git" ]; then
-  if gh repo view "$LAB_REPO" >/dev/null 2>&1; then
+  if [ -n "${VLLM_LAB_TOKEN:-}" ]; then
+    echo "==> cloning $LAB_REPO into $LAB_DIR (using VLLM_LAB_TOKEN)"
+    git clone -q "https://x-access-token:${VLLM_LAB_TOKEN}@github.com/${LAB_REPO}.git" "$LAB_DIR"
+    git -C "$LAB_DIR" remote set-url origin "https://github.com/$LAB_REPO.git"
+  elif gh repo view "$LAB_REPO" >/dev/null 2>&1; then
     echo "==> cloning $LAB_REPO into $LAB_DIR"
     gh repo clone "$LAB_REPO" "$LAB_DIR"
   else
