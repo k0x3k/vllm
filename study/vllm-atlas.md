@@ -1,6 +1,6 @@
 # How vLLM turns a prompt into tokens
 
-*Field guide · vllm-project/vllm · main @ 4b7cb94 · 2026-08-20*
+*Field guide · vllm-project/vllm · line numbers re-pinned to main @ b389ac2 · 2026-08-21 (written @ 4b7cb94)*
 
 A map of the vLLM code: which programs actually run, how a request travels through them, and what each part is for. Written against your checkout at `~/lab/code/infer/vllm`, with hands-on exercises for the RTX 5090 in this machine. Read it top to bottom once, then keep it open as a reference.
 
@@ -75,7 +75,7 @@ Here is the whole journey of one request, as an ordered list of the functions it
    Builds the engine's `Request` object. The fingerprints used for cache reuse (§5) are computed here, on the helper thread, so the main loop never waits for them.
 
 5. **`Scheduler.add_request(…)`**
-   `vllm/v1/core/sched/scheduler.py:2305`
+   `vllm/v1/core/sched/scheduler.py:2331`
    The request joins the waiting line.
 
 6. **`EngineCoreProc.run_busy_loop → EngineCore.step()`**
@@ -83,7 +83,7 @@ Here is the whole journey of one request, as an ordered list of the functions it
    The heartbeat of the whole system. Each beat: decide → run the model → pick tokens → record results. A nice trick hides here: while the GPU is busy with the forward pass, the engine prepares the "which tokens are allowed" mask for structured output — two things at once.
 
 7. **`Scheduler.schedule()`**
-   `vllm/v1/core/sched/scheduler.py:477`
+   `vllm/v1/core/sched/scheduler.py:484`
    The decision: who runs this round, how many tokens each request gets, which memory blocks they use, and whether anyone has to be kicked out. Details in §4.
 
    ↓ **CROSSING INTO THE WORKERS · OVER SHARED MEMORY**
@@ -97,7 +97,7 @@ Here is the whole journey of one request, as an ordered list of the functions it
    The GPU does its thing: update the batch, run the model once over all scheduled requests together, then pick the next token for each.
 
 10. **`Scheduler.update_from_output(…)`**
-   `vllm/v1/core/sched/scheduler.py:1737`
+   `vllm/v1/core/sched/scheduler.py:1744`
    Bookkeeping: append the new tokens, check who's finished (hit a stop token, or their length limit), and package the results for the front end.
 
    ↓ **BACK TO THE FRONT END · OVER A SOCKET**
@@ -126,7 +126,7 @@ Background, in one paragraph: when a model reads your prompt, it processes many 
 
 **Pass 2 — the waiting line.** Skipped entirely if anyone was kicked out this round. For each waiting request: check whether the start of its prompt is already cached (§5), clip its ask to the remaining budget, grab memory, admit. A request that's waiting on something else — say its output-format rules are still being prepared — steps aside instead of blocking the line.
 
-> **Kicking a request out = redoing its work** — When memory runs out, the scheduler frees *everything* a victim request had and sends it back to the front of the waiting line with its progress counter reset to zero (`scheduler.py:1340`). There's no "move it to CPU memory" fallback in v1. It's cheaper than it sounds: the fingerprints of its old blocks still exist, so when it comes back it usually finds most of its work still cached and skips ahead.
+> **Kicking a request out = redoing its work** — When memory runs out, the scheduler frees *everything* a victim request had and sends it back to the front of the waiting line with its progress counter reset to zero (`scheduler.py:1347`). There's no "move it to CPU memory" fallback in v1. It's cheaper than it sounds: the fingerprints of its old blocks still exist, so when it comes back it usually finds most of its work still cached and skips ahead.
 
 One subtlety worth knowing early: the scheduler marks tokens as "done" *the moment it schedules them*, before the GPU has actually run — so the next round can be planned without waiting. If some of those tokens turn out to be rejected guesses (speculative decoding), the count is corrected afterwards in `update_from_output`.
 
@@ -262,7 +262,7 @@ llm.generate(['word ' * 400], SamplingParams(max_tokens=4))"
 
 **Expect:** The same request showing up round after round, getting 64 tokens each time, until its ~400-token prompt is used up. That's "chunked prefill": not a mode, just a budget that ran out. Undo the edit when you're done.
 
-*Files:* vllm/v1/core/sched/scheduler.py:477 (schedule) · :1383 (_update_after_schedule)
+*Files:* vllm/v1/core/sched/scheduler.py:484 (schedule) · :1390 (_update_after_schedule)
 
 ### 3 · Prove the cache reuse with numbers  *(warm-up)*
 
@@ -328,7 +328,7 @@ for m in llm.get_metrics():
 
 **Expect:** A preemption count above zero and a warning in the log. Then read `_preempt_request` and match it to §4: memory freed, progress reset to zero, request back at the front of the line — and the cache quietly absorbing most of the redo on its way back.
 
-*Files:* vllm/v1/core/sched/scheduler.py:1340 (_preempt_request)
+*Files:* vllm/v1/core/sched/scheduler.py:1347 (_preempt_request)
 
 ### 7 · Plug in your own model class  *(deeper)*
 
