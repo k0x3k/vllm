@@ -10,6 +10,7 @@ carry none of this.
 |---|---|
 | Field guide to the codebase | [`study/vllm-atlas.md`](vllm-atlas.md) — read this first |
 | Topic notes | [`study/notes/`](notes/) |
+| CPU-only lab (no GPU needed) | [`study/lab/`](lab/) — run the real scheduler on this machine |
 | Session transcripts + Claude memory | private repo `k0x3k/vllm-lab`, symlinked into `~/.claude/projects/` |
 | Machine bootstrap | [`study/lab-setup.sh`](lab-setup.sh) — run once per machine/rebuild |
 | House rules for contributing | [`AGENTS.md`](../AGENTS.md) — strict, read before any PR |
